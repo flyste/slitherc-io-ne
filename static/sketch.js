@@ -8,69 +8,97 @@ var colours = ['#DB7093','#FFA500', '#FF4500', '#FFA07A', '#FFD700', '#B22222', 
 var speedup = false;
 var notSet = true;
 let input, button;
+var displayText = true;
 
 function setup() {
-  createCanvas(1500, 700);
-  noLoop();
-  input = createInput();
-  input.position(20, 65);
+	createCanvas(1500, 700);
 
-  button = createButton('submit');
-  button.position(input.x + input.width, 65);
-  button.mousePressed(name);
-  
- 
-  
-  //socket = io.connect('http://localhost:5000');
+	
+	input = createInput();
+	input.position(width / 2 - input.width/2, height / 2);
+
+
+	button = createButton('submit');
+	button.position(input.x + input.width, input.y);
 
   
+	button.mousePressed(name);
+	noLoop();
 
 }
 
 function draw() {
-	background(220);
+	background(100);
+	if(displayText === true){
+		push();
+		stroke(255);
+		textSize(20);
+		text('Please enter your name', input.x, input.y - input.height);
+		pop();
+		displayText = false;
+	}
+
 	frameRate(10);
-  
-	if(snakey.alive){
+	
+
+	
+	
+	if(snakey.alive === true){
 		translate(width/2 - snakey.body[0].x, height /2 - snakey.body[0].y);
 		snakey.show();
 		
 		snakey.update(speedup);
+		
 		for(var snk = 0; snk < snakes.length; snk++){
-			//console.log(snakes[snk].id, snakes[snk].length);
 			if(snakes[snk].id != socket.id){
-				snakes[snk].show();
-				//console.log(snakes[snk].id, snakes[snk].length, snakes[snk].body.length);
-				//console.log(snakey.id, snakey.length, snakey.body.length);
+				snakes[snk].show(snakes[snk].colourSeeds);
 				for(var asnk = 0; asnk < snakes[snk].length; asnk ++){
 					if(snakey.die(snakes[snk].body[asnk].x, snakes[snk].body[asnk].y, snakes[snk].size) === true){
-						socket.emit('disconnect', socket.id);
-						socket.disconnect();
 						snakey.alive = false;
 					}
 				}
 			}
 		}
 		updateServer();
+		
+
 	}
-	else{
+	else if(snakey.alive === false){
 		textSize(100);
 		textAlign(CENTER);
 		text('Game Over', 400, 400);
+		socket.emit('disconnect', socket.id);
+		socket.disconnect();
 		snakes = null;
 	}
 
   
   for(var k = 0; k < blobs.length; k++){
 
+	push();
 	noStroke();
 	fill(colours[blobs[k].colour]);
     ellipse(blobs[k].x, blobs[k].y, blobs[k].size - random(0, 3));
-
+	pop();
 
   }
   
   deleteFood();
+  if (snakey.hitWall() === true){
+
+	snakey.alive = false;
+	}	
+	
+	push();
+	stroke(0, 0, 255);
+	strokeWeight(20 - random(0, 3));
+	line(-800, -800, 800 * 3, -800);
+	line(-800, -800, -800, 800 * 3);
+	line(800 * 3, -800, 800 * 3, 800 * 3);
+	line(-800, 800 * 3, 800 * 3, 800 * 3);
+	pop();
+	
+
  
 }
 
@@ -146,9 +174,6 @@ function updateOtherSnakes(data){
 
 function updateFood(data){
 	
-		//for(var b = 0; b < data.length; b++){
-		//	blobs.push(new foodBlob(data[b].x, data[b].y, data[b].size));
-		//}
 		blobs = data;
 			
 }
@@ -158,7 +183,6 @@ setInterval(updateServer, 33);
 
 function updateServer(){
 	for (var x = 0; x < snakey.body.length; x++){
-		//console.log(snakey.length);
 		data[x] = {snakebodyx: snakey.body[x].x, snakebodyy: snakey.body[x].y, snakesize: snakey.size, snakelength: snakey.body.length, snakename: snakey.name};
 	} 
 	socket.emit('updateServer', data);
