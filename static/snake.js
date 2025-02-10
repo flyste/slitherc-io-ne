@@ -31,7 +31,7 @@ class snake{
 		this.eaten += size;
 		if(this.eaten / 10 > 4){
 			this.grow();
-			this.size += 0.1;
+			this.size += 0.9;
 			this.eaten = this.eaten / 10;
 		}
 		//print("eaten");
